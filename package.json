@@ -6,6 +6,8 @@
     "firebase": "^4.7.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
+    "react-firebaseui": "^1.0.10",
+    "react-numeric-input": "^2.2.0",
     "react-scripts-ts": "2.8.0"
   },
   "scripts": {
