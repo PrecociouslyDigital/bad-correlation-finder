@@ -27,27 +27,29 @@ export default class NewCorrelate extends React.Component<{userFirebaseRef:fireb
     
     render(){
         return(
-            <form className = "form-horizontal" onSubmit={this.handleSubmit}>
-                <div className="form-group ">
-                    <label htmlFor="name" className="control-label col-md-4">Task Name</label>
-                    <input type="text" onChange={this.handleChange} className="form-control col-md-8" id="name" aria-describedby="nameHelp" placeholder="Enter name" value={this.state.name} required />
+            <form className = "list-group list-group-flush form-horizontal" onSubmit={this.handleSubmit}>
+                <div className="form-group form-row justify-content-between align-items-center">
+                    <label htmlFor="name" className="control-label col-lg-auto">Task Name</label>
+                    <input type="text" onChange={this.handleChange} className="form-control col-lg-auto" id="name" aria-describedby="nameHelp" placeholder="Enter name" value={this.state.name} required />
                     <small id="nameHelp" className="form-text text-muted">Describe your task here</small>
                   </div>
-                  <div className="form-group">
-                    <label htmlFor="frequency" className="control-label col-md-4">Frequency</label>
-                    <select className="form-control form-control col-md-8" id="frequency" onChange={this.handleChange} value={this.state.frequency} required>
+                  <div className="form-group form-row justify-content-between align-items-center">
+                    <label htmlFor="frequency" className="control-label col-lg-auto">Frequency</label>
+                    <select className="form-control col-lg-auto" id="frequency" onChange={this.handleChange} value={this.state.frequency} required>
                         <option value="hourly">Hourly</option>
                         <option value="daily">Daily</option>
                     </select>
                   </div>
-                  <div className="form-group">
-                    <label htmlFor="type" className="control-label col-md-4">Type</label>
-                    <select className="form-control form-control col-md-8" id="type" onChange={this.handleChange} value={this.state.type} required>
+                  <div className="form-group form-row justify-content-between align-items-center">
+                    <label htmlFor="type" className="control-label col-lg-auto">Type</label>
+                    <select className="form-control col-lg-auto" id="type" onChange={this.handleChange} value={this.state.type} required>
                         <option value="booly">True/False</option>
                         <option value="numbery">Numeric</option>
                     </select>
                   </div>
-                  <button type="submit" className="btn btn-primary">Submit</button>
+                  <div className="form-group form-row">
+                    <button type="submit col-lg-auto" className="btn btn-primary">Submit</button>
+                  </div>
             </form>
         );
     }

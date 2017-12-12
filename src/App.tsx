@@ -6,8 +6,9 @@ import { FirebaseAuth } from 'react-firebaseui';
 import {Collapsable, Collapse} from './Collapsable';
 import NewCorrelate from './NewCorrelate';
 import Daily from './Daily';
+import Component from './Component';
 
-export default class App extends React.Component {
+export default class App extends Component<{}> {
   state:GlobalAppState;
   
   constructor(props:{}) {
@@ -29,7 +30,7 @@ export default class App extends React.Component {
       for(const key in this.state.unfinished.daily){
         dailies.push(
                       <Collapsable refName={"daily" + key} readableName={"Daily Tasks For " + key} show={this.state.unfinished.daily[key]}>
-                        <Daily firebaseRef={this.state.userFirebaseRef} idString={key}/>
+                        <Daily firebaseRef={this.state.userFirebaseRef} idString={key} key={key}/>
                       </Collapsable>
                     );
       }
@@ -77,15 +78,9 @@ export default class App extends React.Component {
         </nav>
         {this.state.signedIn ?
           <div className='container-fluid'>
-            <div className='row'>
-              You're Logged In
+            <div className='row justify-content-lg-around'>
               <Collapse>
-                <Collapsable refName="firebaseRef" readableName="Firebase Url">
-                  <pre>
-                    {JSON.stringify(this.state.userFirebaseRef.toJSON(),null,4)}
-                  </pre>
-                </Collapsable>
-                <Collapsable refName="NewCorrelate" readableName="New Correlate">
+                <Collapsable refName="NewCorrelate" key="NewCorrelate" readableName="New Correlate" show={false}>
                   <NewCorrelate userFirebaseRef={this.state.userFirebaseRef}/>
                 </Collapsable>
                 {dailies}
@@ -110,31 +105,39 @@ export default class App extends React.Component {
   }
   
   mountListeners(){
-    this.state.userFirebaseRef.child('unfinished').once('value',(snapshot)=>{
+    this.state.userFirebaseRef.child('unfinished').child("daily").once('value',(snapshot)=>{
       let data = snapshot.val();
       if(data){
-        if(data[new Date().toISOString()] === undefined){
-          this.state.userFirebaseRef.child("unfinished").child(new Date().toISOString()).set(true);
+        if(data[new Date().toDateString()] !== undefined){
+          return;
         }
       }
+      this.state.userFirebaseRef.child("unfinished").child("daily").child(new Date().toDateString()).set(true);
     });
     let updateFunction = (snapshot)=>{
       if(snapshot){
-        this.setState({unfinished : {
+        this.updateState({unfinished : {
             daily:{
-              [snapshot.key] : snapshot.val()
+              [snapshot.key] : {
+                $set: snapshot.val()
+              }
             }
           }
         });
       }
     };
-    this.state.userFirebaseRef.child('unfinished').on('child_added',updateFunction);
-    this.state.userFirebaseRef.child('unfinished').on('child_changed',updateFunction);
-    this.state.userFirebaseRef.child('unfinished').on('child_removed',(snapshot)=>{
+    this.state.userFirebaseRef.child('unfinished').child('daily').on('child_added',updateFunction);
+    this.state.userFirebaseRef.child('unfinished').child('daily').on('child_changed',updateFunction);
+    this.state.userFirebaseRef.child('unfinished').child('daily').on('child_removed',(snapshot)=>{
       if(snapshot){
-        this.setState({unfinished : {
-          [snapshot.key] : false
-        }});
+        this.updateState({unfinished : {
+            daily:{
+              [snapshot.key] : {
+                $set: false
+              }
+            }
+          }
+        });
       }
     });
   }
@@ -142,17 +145,21 @@ export default class App extends React.Component {
   componentDidMount() {
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
-        this.setState({
-          signedIn:true,
-          user:user,
-          userFirebaseRef:firebase.database().ref(`users/${user.uid}`)
+        this.updateState({
+          $merge:{
+            signedIn:true,
+            user:user,
+            userFirebaseRef:firebase.database().ref(`users/${user.uid}`)
+          }
         });
         this.mountListeners();
       }else{
-        this.setState({
-          signedIn:false,
-          user : null,
-          userFirebaseRef:null
+        this.updateState({
+          $merge:{
+            signedIn:false,
+            user : null,
+            userFirebaseRef:null
+          }
         });
       } 
     });
