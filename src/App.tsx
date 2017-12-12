@@ -3,57 +3,59 @@ import './App.css';
 import firebase from './firebase/firebase';
 import { UserInfo } from 'firebase';
 import { FirebaseAuth } from 'react-firebaseui';
-import {Collapsable, Collapse} from './Collapsable';
+import { Collapsable, Collapse } from './Collapsable';
 import NewCorrelate from './NewCorrelate';
 import Daily from './Daily';
+import Hourly from './Hourly';
 import Component from './Component';
+import * as moment from 'moment';
 
 export default class App extends Component<{}> {
-  state:GlobalAppState;
+  state: GlobalAppState;
   
-  constructor(props:{}) {
+  constructor(props: {}) {
     super(props);
     this.state = {
-      unfinished:{
-        daily:{
+      unfinished: {
+        daily: {
         }
       },
-      userInfo:null,
+      userInfo: null,
       userFirebaseRef : null,
       signedIn: false
     };
     this.logout = this.logout.bind(this);
   }
   render() {
-    const dailies :JSX.Element[] = [];
-    if(this.state.userFirebaseRef){
-      for(const key in this.state.unfinished.daily){
+    const dailies: JSX.Element[] = [];
+    if (this.state.userFirebaseRef) {
+      for (const key in this.state.unfinished.daily) {
         dailies.push(
-                      <Collapsable refName={"daily" + key} readableName={"Daily Tasks For " + key} show={this.state.unfinished.daily[key]}>
-                        <Daily firebaseRef={this.state.userFirebaseRef} idString={key} key={key}/>
+                      <Collapsable refName={'daily' + key} readableName={'Daily Tasks For ' + moment(key, timeFormat).calendar()} show={this.state.unfinished.daily[key]}>
+                        <Daily firebaseRef={this.state.userFirebaseRef} dateString={key} key={key}/>
                       </Collapsable>
                     );
       }
     }
     return (
-      <div className='container-fluid'>
-        <nav className='navbar navbar-expand-lg navbar-dark bg-primary'>
-          <button className ='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarNavDropdown' aria-controls='navbarNavDropdown' aria-expanded='false' aria-label='Toggle navigation'>
-              <span className='navbar-toggler-icon'></span>
+      <div className="container-fluid">
+        <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
+          <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+              <span className="navbar-toggler-icon"></span>
           </button>
 
-          <a className='navbar-brand mr-auto' href='#'>Navbar</a>
+          <a className="navbar-brand mr-auto" href="#">Navbar</a>
           
-          <div className='navbar-collapse collapse'>
-            <ul className='navbar-nav mr-auto'>
-                <li className='nav-item active'>
-                    <a className='nav-link' href='#'>Home <span className='sr-only'>(current)</span></a>
+          <div className="navbar-collapse collapse">
+            <ul className="navbar-nav mr-auto">
+                <li className="nav-item active">
+                    <a className="nav-link" href="#">Home <span className="sr-only">(current)</span></a>
                 </li>
 
             </ul>
-            <ul className='navbar-nav'>
+            <ul className="navbar-nav">
             {this.state.signedIn ?
-              <button className='btn btn-primary ' onClick={this.logout}>Log Out</button>
+              <button className="btn btn-primary " onClick={this.logout}>Log Out</button>
             :
               <li className="dropdown">
                 <a className="dropdown-toggle" data-toggle="dropdown" href="#">Login
@@ -66,8 +68,8 @@ export default class App extends Component<{}> {
                       firebase.auth.FacebookAuthProvider.PROVIDER_ID,
                       firebase.auth.EmailAuthProvider.PROVIDER_ID
                     ],
-                    callbacks:{
-                      signInSuccess:()=>{this.mountListeners(); return false}
+                    callbacks: {
+                      signInSuccess: () => {this.mountListeners(); return false; }
                     }
                   }} firebaseAuth={firebase.auth()}/>
                 </ul>
@@ -77,11 +79,14 @@ export default class App extends Component<{}> {
           </div>
         </nav>
         {this.state.signedIn ?
-          <div className='container-fluid'>
-            <div className='row justify-content-lg-around'>
+          <div className="container-fluid">
+            <div className="row justify-content-lg-around">
               <Collapse>
                 <Collapsable refName="NewCorrelate" key="NewCorrelate" readableName="New Correlate" show={false}>
                   <NewCorrelate userFirebaseRef={this.state.userFirebaseRef}/>
+                </Collapsable>
+                <Collapsable refName="Hourlies" key="Hourlies" readableName={"Hourlies for " + moment().format("hA")}  show={true}>
+                  <Hourly dateString={moment().format(timeFormat)} hour={moment().hour().toString()} firebaseRef={this.state.userFirebaseRef}/>
                 </Collapsable>
                 {dailies}
               </Collapse>
@@ -89,35 +94,34 @@ export default class App extends Component<{}> {
             
           </div>
             :
-            <div className='row'>
-              <div className='col-lg-12'> 
+            <div className="row">
+              <div className="col-lg-12"> 
                 YOU'RE NOT SIGNED IN.
               </div>
             </div>
         }
       </div>
-    );//TODO: change this at some point
+    ); //TODO: change this at some point
   }
-
 
   logout() {
     firebase.auth().signOut();
   }
   
-  mountListeners(){
-    this.state.userFirebaseRef.child('unfinished').child("daily").once('value',(snapshot)=>{
+  mountListeners() {
+    this.state.userFirebaseRef.child('unfinished').child('daily').once('value', (snapshot) => {
       let data = snapshot.val();
-      if(data){
-        if(data[new Date().toDateString()] !== undefined){
+      if (data) {
+        if (data[moment().format(timeFormat)] !== undefined) {
           return;
         }
       }
-      this.state.userFirebaseRef.child("unfinished").child("daily").child(new Date().toDateString()).set(true);
+      this.state.userFirebaseRef.child('unfinished').child('daily').child(new Date().toDateString()).set(true);
     });
-    let updateFunction = (snapshot)=>{
-      if(snapshot){
+    let updateFunction = (snapshot) => {
+      if (snapshot) {
         this.updateState({unfinished : {
-            daily:{
+            daily: {
               [snapshot.key] : {
                 $set: snapshot.val()
               }
@@ -126,12 +130,12 @@ export default class App extends Component<{}> {
         });
       }
     };
-    this.state.userFirebaseRef.child('unfinished').child('daily').on('child_added',updateFunction);
-    this.state.userFirebaseRef.child('unfinished').child('daily').on('child_changed',updateFunction);
-    this.state.userFirebaseRef.child('unfinished').child('daily').on('child_removed',(snapshot)=>{
-      if(snapshot){
+    this.state.userFirebaseRef.child('unfinished').child('daily').on('child_added', updateFunction);
+    this.state.userFirebaseRef.child('unfinished').child('daily').on('child_changed', updateFunction);
+    this.state.userFirebaseRef.child('unfinished').child('daily').on('child_removed', (snapshot) => {
+      if (snapshot) {
         this.updateState({unfinished : {
-            daily:{
+            daily: {
               [snapshot.key] : {
                 $set: false
               }
@@ -146,19 +150,19 @@ export default class App extends Component<{}> {
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         this.updateState({
-          $merge:{
-            signedIn:true,
-            user:user,
-            userFirebaseRef:firebase.database().ref(`users/${user.uid}`)
+          $merge: {
+            signedIn: true,
+            user: user,
+            userFirebaseRef: firebase.database().ref(`users/${user.uid}`)
           }
         });
         this.mountListeners();
-      }else{
+      } else {
         this.updateState({
-          $merge:{
-            signedIn:false,
+          $merge: {
+            signedIn: false,
             user : null,
-            userFirebaseRef:null
+            userFirebaseRef: null
           }
         });
       } 
@@ -168,13 +172,14 @@ export default class App extends Component<{}> {
 }
 
 export interface GlobalAppState {
-      userInfo : UserInfo ; 
+      userInfo: UserInfo ; 
       userFirebaseRef: firebase.database.Reference ;
       signedIn: boolean;
-      unfinished:{
+      unfinished: {
         daily: {
-          [key: string] : boolean;
+          [key: string]: boolean;
         };
-      }
+      };
 }
 
+export const timeFormat: string = 'MM-DD-YYYY';
