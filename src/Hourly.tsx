@@ -29,6 +29,7 @@ export default class Hourly extends Component<{
     super(props);
     this.handleActive = this.handleActive.bind(this);
     this.handleNumber = this.handleNumber.bind(this);
+    this.handleCheck = this.handleCheck.bind(this);
   }
   
   instanceRef(): firebase.database.Reference {
@@ -62,7 +63,7 @@ export default class Hourly extends Component<{
       checked:boolean;
     }
   }) {
-      this.instanceRef().child(e.target.name).set(!e.target.checked);
+      this.instanceRef().child(e.target.name).set(e.target.checked);
   }
   
   componentDidMount() {
@@ -83,7 +84,7 @@ export default class Hourly extends Component<{
   }
   
   handleActive() {
-    this.instanceRef().update({});
+    this.instanceRef().transaction((data) => data == null ? true : undefined);
   }
 }
 
