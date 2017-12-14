@@ -6,6 +6,8 @@
     "firebase": "^4.7.0",
     "immutability-helper": "^2.6.0",
     "moment": "^2.19.4",
+    "node-cron": "^1.2.1",
+    "octicons": "^7.0.1",
     "parse-number": "^1.0.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
@@ -19,7 +21,9 @@
     "eject": "react-scripts-ts eject"
   },
   "devDependencies": {
+    "@types/bootstrap": "^3.3.36",
     "@types/jest": "^21.1.8",
+    "@types/jquery": "^3.2.17",
     "@types/node": "^8.0.56",
     "@types/react": "^16.0.27",
     "@types/react-dom": "^16.0.3"

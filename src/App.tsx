@@ -9,9 +9,9 @@ import Daily from './Daily';
 import Hourly from './Hourly';
 import Component from './Component';
 import * as moment from 'moment';
+import * as cron from 'node-cron';
 
-export default class App extends Component<{}> {
-  state: GlobalAppState;
+export default class App extends Component<{},GlobalAppState> {
   
   constructor(props: {}) {
     super(props);
@@ -30,8 +30,15 @@ export default class App extends Component<{}> {
     const dailies: JSX.Element[] = [];
     if (this.state.userFirebaseRef) {
       for (const key in this.state.unfinished.daily) {
+        const show = this.state.unfinished.daily[key];
         dailies.push(
-                      <Collapsable refName={'daily' + key} readableName={'Daily Tasks For ' + moment(key, timeFormat).calendar()} show={this.state.unfinished.daily[key]}>
+                      <Collapsable 
+                        refName={'daily' + key}
+                        readableName={'Daily Tasks For ' + moment(key, timeFormat).calendar(null, calendarFormat)}
+                        show={show} 
+                        octicon={!show ? "check" : undefined}
+                        octiconClass="text-success"
+                      >
                         <Daily firebaseRef={this.state.userFirebaseRef} dateString={key} key={key}/>
                       </Collapsable>
                     );
@@ -116,7 +123,10 @@ export default class App extends Component<{}> {
           return;
         }
       }
-      this.state.userFirebaseRef.child('unfinished').child('daily').child(new Date().toDateString()).set(true);
+      this.state.userFirebaseRef.child('unfinished').child('daily').child(moment().format(timeFormat)).transaction((val) =>{
+        if(val == null) return true;
+        return undefined;
+      });
     });
     let updateFunction = (snapshot) => {
       if (snapshot) {
@@ -131,7 +141,8 @@ export default class App extends Component<{}> {
       }
     };
     this.state.userFirebaseRef.child('unfinished').child('daily').on('child_added', updateFunction);
-    this.state.userFirebaseRef.child('unfinished').child('daily').on('child_changed', updateFunction);
+    //Hackiness to allow animation
+    this.state.userFirebaseRef.child('unfinished').child('daily').on('child_changed', (snapshot)=>setTimeout(()=>updateFunction(snapshot), 500));
     this.state.userFirebaseRef.child('unfinished').child('daily').on('child_removed', (snapshot) => {
       if (snapshot) {
         this.updateState({unfinished : {
@@ -143,6 +154,9 @@ export default class App extends Component<{}> {
           }
         });
       }
+    });
+    cron.schedule('3 * * * *', ()=>{
+      this.forceUpdate();
     });
   }
   
@@ -183,3 +197,12 @@ export interface GlobalAppState {
 }
 
 export const timeFormat: string = 'MM-DD-YYYY';
+
+export const calendarFormat = {
+    sameDay: '[Today]',
+    nextDay: '[Tomorrow]',
+    nextWeek: 'dddd',
+    lastDay: '[Yesterday]',
+    lastWeek: '[Last] dddd',
+    sameElse: 'MMMM DDDD YYYY'
+};

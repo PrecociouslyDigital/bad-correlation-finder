@@ -15,11 +15,13 @@ export default class Daily extends Component<{
       [key: string]: string;  
     };
     data: {
-      [key: string]: {};
+      [key: string]: any;
     }
+    valid: boolean
   } = {
     correlates: {},
     data: {},
+    valid:false,
   };
   
   constructor(props: {
@@ -37,14 +39,17 @@ export default class Daily extends Component<{
   
   render() {
     const correlates: JSX.Element[] = [];
+    let valid = true;
     for (const key in this.state.correlates) {
       correlates.push(lineWrapper(dailyWidgets[this.state.correlates[key]](key, this)));
+      if(this.state.data[key] == null) valid=false;
     }
     return (
-        <form onSubmit={this.handleSubmit} className="list-group list-group-flush form-horizontal">
+        <form onSubmit={valid ? this.handleSubmit : (e)=>{e.preventDefault();this.updateState({valid:{$set:true}});}
+        } className="list-group list-group-flush form-horizontal">
           {correlates}
           {lineWrapper(<div className="form-group form-row">
-            <button type="submit col-lg-auto" className="btn btn-primary">Submit</button>
+            <button type="submit col-lg-auto" className={"btn btn-primary " + (valid ? '' : 'disabled')} >Submit</button>
           </div>)}
         </form>
     );
@@ -87,13 +92,19 @@ export default class Daily extends Component<{
     preventDefault : ()=>void;
   }) {
     e.preventDefault();
-    this.props.firebaseRef.child('unfinished')
-                              .child('daily')
-                              .child(this.props.dateString)
-                              // Set false if it's today to just hide, remove if it's a past due one.
-                              .set(this.props.dateString === moment().format(timeFormat) ? false : null);
+    this.props.firebaseRef.child("unfinished")
+                          .child("daily")
+                          .child(this.props.dateString)
+                          // Set false if it's today to just hide, remove if it's a past due one.
+                          .set(this.props.dateString === moment().format(timeFormat) ? false : null);
+    //such an ugly hack but alas nessacary
+    window["$"](`#daily${this.props.dateString}`).collapse('hide');
+    this.updateState({
+      valid:{$set:false}
+    });
   }
-  handleRadioClick(name: string, value: boolean) {
+  
+  handleRadioClick(name: string, value: any) {
     this.instanceRef().child(name).set(value);
   }
 }
@@ -107,24 +118,29 @@ const dailyWidgets: {
                           ? thisRef.state.data[title] 
                           : thisRef.state.data[title].toString();
     // I know I'm probably committing a cardnial Sin. I don't care at this point tho
+    let validate = false;
+    if(thisRef.state.valid){
+      validate = value == null;
+    }
+    
     return (
-        <div className="form-row justify-content-between align-items-center">
-          <label className="control-label col-lg-auto" htmlFor={title}>{title}</label>
+        <div className={"form-group form-row justify-content-between align-items-center " + (validate ? "list-group-item-danger" : "")}>
+          <label className={"control-label col-lg-auto "  + (validate ? "text-danger" : "")} htmlFor={title}>{title}</label>
           <div className="btn-group col-lg-auto align-self-end" data-toggle="buttons">
             <label 
-              className={'btn btn-success ' + value === 'true' ? 'active' : ''}
+              className={'btn btn-success ' + (value === 'true' ? 'active' : '')}
               onClick={() => thisRef.handleRadioClick(title, true)}
             >
               Yes
             </label>
             <label 
-              className={'btn btn-warning ' + value === null ? 'active' : ''}
-              onClick={() => thisRef.handleRadioClick(title, null)}
+              className={'btn btn-warning ' + (value === "unsure" ? 'active' : '')}
+              onClick={() => thisRef.handleRadioClick(title, "unsure")}
             >
               Not Sure
             </label>
             <label 
-              className={'btn btn-danger ' + value === 'false' ? 'active' : ''} 
+              className={'btn btn-danger ' + (value === 'false' ? 'active' : '')} 
               onClick={() => thisRef.handleRadioClick(title, false)}
             >
               No
@@ -134,10 +150,17 @@ const dailyWidgets: {
     );
   },
   'numbery' : function(title, thisRef) {
+    const value = thisRef.state.data[title] == null ?
+                  thisRef.state.data[title] :
+                  Number(thisRef.state.data[title]);
+    let validate = false;
+    if(thisRef.state.valid){
+      validate = value == null;
+    }
     return (
-      <div className="form-row justify-content-between align-items-center">
-        <label htmlFor={title} className="control-label col-lg-auto">{title}</label>
-        <input type="number" name={title} className="form-control col-lg-auto align-self-end" value={parseNumber(thisRef.state.data[title])} onChange={thisRef.handleNumber} required={true}/>
+      <div className={"form-row justify-content-between align-items-center " + (validate ? "list-group-item-danger" : "")}>
+        <label htmlFor={title} className={"control-label col-lg-auto " + (validate ? "text-danger" : "")}>{title}</label>
+        <input type="number" name={title} className={"form-control col-lg-auto align-self-end " + (validate ? "is-invalid" : "" )}  value={value} onChange={thisRef.handleNumber}/>
       </div>
     );
   }

@@ -1,8 +1,13 @@
 import * as React from 'react';
-export class Collapsable extends React.Component<{
+import Component from './Component'
+import * as octicon from 'octicons';
+
+export class Collapsable extends Component<{
   refName: string;
   readableName: string;
   show ?: boolean;
+  octicon ?: string;
+  octiconClass ?: string;
 }> {
   render() {
     return (
@@ -12,10 +17,19 @@ export class Collapsable extends React.Component<{
           <a className={this.props.show ? '' : 'collapsed'} data-toggle="collapse" href={'#' + this.props.refName} aria-expanded="true" aria-controls={this.props.refName}>
             {this.props.readableName}
           </a>
+          {this.props.octicon ? 
+            <span className={this.props.octiconClass ? this.props.octiconClass : ""} dangerouslySetInnerHTML={{__html:octicon[this.props.octicon].toSVG()}}></span>
+            : <div></div>
+          }
         </h5>
       </div>
       <div className="col-lg-12">
-        <div id={this.props.refName} className={'collapse ' + this.props.show ? 'show' : ''} role="tabpanel" aria-labelledby={this.props.refName}>
+        <div 
+         id={this.props.refName}
+         className={'collapse ' + (this.props.show ? 'show' : '')} 
+         role="tabpanel" 
+         aria-labelledby={this.props.refName} 
+        >
           <div className="card-block">
             {this.props.children}
           </div>
